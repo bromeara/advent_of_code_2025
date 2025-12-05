@@ -39,7 +39,7 @@ fn run(file_path: &str) -> Result<(), Box<dyn Error>> {
         let parse_res = IDRange::build(raw);
         match parse_res {
             Ok(id_range) => {
-                dbg!(&raw);
+                // dbg!(&raw);
                 // dbg!(&id_range);
                 range_pairs.push(id_range);
 
@@ -129,17 +129,18 @@ fn get_sillyids(range: &IDRange) -> Result<Vec<i64>, &'static str> {
             let c = split_every(&id, n);
             let mut comparisons = c.windows(2).peekable();
             if !comparisons.peek().is_some() {
+                // println!("No windows were found.");
                 continue;
             }
             let is_silly = c.windows(2).all(|w| w[0] == w[1]);
             if is_silly {
                 // dbg!(&c);
                 if i <= range.high_value && i >= range.low_value {
-                    dbg!(&c);
+                    // dbg!(&c);
                     silly_ids.push(i);
                 } else {
-                    dbg!(range);
-                    dbg!(&c);
+                    // dbg!(range);
+                    // dbg!(&c);
                     println!("Invalid silly id{i}");
                 }
                 break;
