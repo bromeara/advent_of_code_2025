@@ -44,8 +44,11 @@ fn run(file_path: &str) -> Result<(), Box<dyn Error>> {
 
                 let ids_res = get_sillyids(range_pairs.last().unwrap());
                 match ids_res {
-                    Ok(mut ids) => {
-                        silly_ids.append(&mut ids);
+                    Ok(ids) => {
+                        // dbg!(&ids);
+                        for id in ids {
+                            silly_ids.push(id);
+                        }
                     }
                     Err(e) => {
                         println!("Error: {e}");
@@ -85,7 +88,7 @@ impl IDRange {
             Ok(i) => {
                 low_value = i;
             }
-            Err(e) => {
+            Err(_e) => {
                 return Err("Error getting int from str: low_value");
             }
         }
@@ -94,7 +97,7 @@ impl IDRange {
             Ok(i) => {
                 high_value = i;
             }
-            Err(e) => {
+            Err(_e) => {
                 return Err("Error getting int from str: high_value");
             }
         }
@@ -109,52 +112,50 @@ impl IDRange {
             high_value,
         })
     }
+
+    fn is_valid(&self, id: &str) -> bool {
+        let value = id.parse::<i64>().unwrap();
+        value <= self.high_value && value >= self.low_value
+    }
 }
 
 fn get_sillyids(range: &IDRange) -> Result<Vec<i64>, &'static str> {
-    let mut low_id = range.low_id.clone();
-    let low_initial_len = low_id.len();
-
-    let mut high_id = range.high_id.clone();
-    let high_initial_len = high_id.len();
-
     let mut silly_ids: Vec<i64> = Vec::new();
 
-    if !low_initial_len.is_multiple_of(2) {
-        low_id = (0..low_initial_len).map(|_| "0").collect::<String>();
-        low_id.insert(0, '1');
-        // dbg!(&low_id);
-    };
-    if !high_initial_len.is_multiple_of(2) {
-        high_id = (0..high_initial_len - 1).map(|_| "9").collect::<String>();
-        // dbg!(&high_id);
-    };
-
-    let low_range_front = String::from(low_id.split_at(low_id.len() / 2).0);
-    let high_range_front = String::from(high_id.split_at(high_id.len() / 2).0);
-
-    let low_front_value = low_range_front.parse::<i64>().unwrap();
-    let high_front_value = high_range_front.parse::<i64>().unwrap();
-    let silly_id_space = (low_front_value..(high_front_value + 1));
-
-    for id in silly_id_space {
-        let silly_id = format!("{}{}", id, id);
-        let silly_id = silly_id.parse::<i64>().unwrap();
-        if silly_id <= range.high_value && silly_id >= range.low_value {
-            silly_ids.push(silly_id);
+    for i in range.low_value..range.high_value + 1 {
+        let id = format!("{}", i);
+        if !id.len().is_multiple_of(2) {
+            continue;
+        }
+        let n = valid_pattern_factor(id.len())[0];
+        let c = split_every(&id, n);
+        let is_silly = c.windows(2).all(|w| w[0] == w[1]);
+        if is_silly {
+            silly_ids.push(i);
         }
     }
-    // }
     Ok(silly_ids)
 }
 
-fn valid_pattern_factor(number: i64) -> Vec<i64> {
+fn split_every<'a>(value: &'a str, n: usize) -> Vec<&'a str> {
+    let number_of_slices = value.len() / n;
+    let mut r_vector: Vec<&str> = Vec::new();
+    for i in 0..number_of_slices {
+        let s = &value[i * n..(i + 1) * n];
+        r_vector.push(s);
+    }
+    r_vector
+}
+
+fn valid_pattern_factor(number: usize) -> Vec<usize> {
     let start = 2;
-    let mut result: Vec<i64> = vec![1];
-    for n in (start..(number / 2) + 1) {
+    let mut result: Vec<usize> = vec![1];
+    for n in start..(number / 2) + 1 {
         if number % n == 0 {
             result.push(n);
         }
     }
+    result.reverse();
+    // dbg!(&result);
     result
 }
