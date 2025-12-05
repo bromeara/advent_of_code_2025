@@ -1,5 +1,6 @@
 // Invalid Ids are only possible if the first half of the numbers can appear in the second half.
 // so splitting the first and second ids apart and then seeing if the range of them is posible in the full sequence
+use std::collections::HashSet;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -33,12 +34,12 @@ fn run(file_path: &str) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(file_path)?;
     let raw_range_pairs: Vec<&str> = contents.split(',').collect();
     let mut range_pairs: Vec<IDRange> = Vec::new();
-    let mut silly_ids: Vec<i64> = Vec::new();
+    let mut silly_ids: HashSet<i64> = HashSet::new();
     for raw in raw_range_pairs {
         let parse_res = IDRange::build(raw);
         match parse_res {
             Ok(id_range) => {
-                // dbg!(&raw);
+                dbg!(&raw);
                 // dbg!(&id_range);
                 range_pairs.push(id_range);
 
@@ -47,7 +48,7 @@ fn run(file_path: &str) -> Result<(), Box<dyn Error>> {
                     Ok(ids) => {
                         // dbg!(&ids);
                         for id in ids {
-                            silly_ids.push(id);
+                            silly_ids.insert(id);
                         }
                     }
                     Err(e) => {
@@ -124,14 +125,25 @@ fn get_sillyids(range: &IDRange) -> Result<Vec<i64>, &'static str> {
 
     for i in range.low_value..range.high_value + 1 {
         let id = format!("{}", i);
-        if !id.len().is_multiple_of(2) {
-            continue;
-        }
-        let n = valid_pattern_factor(id.len())[0];
-        let c = split_every(&id, n);
-        let is_silly = c.windows(2).all(|w| w[0] == w[1]);
-        if is_silly {
-            silly_ids.push(i);
+        for n in valid_pattern_factor(id.len()) {
+            let c = split_every(&id, n);
+            let mut comparisons = c.windows(2).peekable();
+            if !comparisons.peek().is_some() {
+                continue;
+            }
+            let is_silly = c.windows(2).all(|w| w[0] == w[1]);
+            if is_silly {
+                // dbg!(&c);
+                if i <= range.high_value && i >= range.low_value {
+                    dbg!(&c);
+                    silly_ids.push(i);
+                } else {
+                    dbg!(range);
+                    dbg!(&c);
+                    println!("Invalid silly id{i}");
+                }
+                break;
+            }
         }
     }
     Ok(silly_ids)

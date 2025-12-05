@@ -39,3 +39,5 @@ Invalie Ids are ones that have repeating patterns there are no leading 0s
 What do you get if you add up all of the invalid IDs?
 
 Your puzzle answer was 23039913998.
+
+too high 35950619190
