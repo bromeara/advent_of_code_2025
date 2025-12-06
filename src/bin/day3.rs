@@ -23,11 +23,11 @@ fn parse_args(args: &[String]) -> Result<&str, &'static str> {
 
 fn run(file_path: &str) -> Result<(), Box<dyn Error>> {
     let battery_banks = process_input(file_path);
-    let mut total_joltage: i64 = 0;
+    let mut total_joltage: u64 = 0;
     for bank in battery_banks {
-        let j = bank.max_joltage();
+        let j = bank.max_joltage(12);
         // println!("Max Joltage: {j}");
-        total_joltage += i64::from(j);
+        total_joltage += u64::from(j);
     }
     println!("Total Joltage: {total_joltage}");
     Ok(())
@@ -57,11 +57,21 @@ impl BatteryBank {
         })
     }
 
-    fn max_joltage(&self) -> u32 {
-        let first_digit = BatteryBank::max_digit(&self.batteries[..self.batteries.len() - 1], 0);
-        let second_digit =
-            BatteryBank::max_digit(&self.batteries[first_digit.0 + 1..], first_digit.0);
-        first_digit.1 * 10 + second_digit.1
+    fn max_joltage(&self, digits: u32) -> u64 {
+        let mut max_joltage: u64 = 0;
+        let mut prev_index: i32 = -1;
+        let place: u64 = 10;
+
+        for i in (0..digits).rev() {
+            let digit = BatteryBank::max_digit(
+                &self.batteries[(prev_index + 1) as usize..self.batteries.len() - i as usize],
+                (prev_index + 1) as usize,
+            );
+            prev_index = digit.0 as i32;
+            max_joltage += u64::from(digit.1) * place.pow(i);
+        }
+
+        max_joltage
     }
 
     fn max_digit(batteries: &[u32], start_index: usize) -> (usize, u32) {
